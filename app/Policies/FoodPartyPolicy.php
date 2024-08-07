@@ -17,7 +17,7 @@ class FoodPartyPolicy
 
     public function view(User $user, FoodParty $foodParty): bool
     {
-        return $user->id === $foodParty->user_id;
+        return $user->isAdmin() || $user->id === $foodParty->user_id;
     }
 
     public function create(User $user): bool
@@ -27,11 +27,11 @@ class FoodPartyPolicy
 
     public function update(User $user, FoodParty $foodParty): bool
     {
-        return $user->id === $foodParty->user_id;
+        return $user->isAdmin() || $user->id === $foodParty->user_id;
     }
 
     public function delete(User $user, FoodParty $foodParty): bool
     {
-        return $user->id === $foodParty->user_id;
+        return $user->isAdmin() || $user->id === $foodParty->user_id;
     }
 }
