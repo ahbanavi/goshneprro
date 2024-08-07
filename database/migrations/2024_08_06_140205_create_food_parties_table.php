@@ -13,8 +13,8 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete()->restrictOnUpdate();
 
             $table->string('description')->nullable();
-            $table->decimal('lat', 8, 6);
-            $table->decimal('long', 9, 6);
+            $table->double('latitude');
+            $table->double('longitude');
             $table->unsignedTinyInteger('threshold')->default(0);
             $table->unsignedBigInteger('tg_chat_id');
             $table->boolean('active')->default(true);

@@ -29,7 +29,7 @@ class FoodPartyService
 
     public static function get(FoodParty $foodParty): bool
     {
-        $home_url = "https://snappfood.ir/search/api/v1/desktop/new-home?lat={$foodParty->lat}&long={$foodParty->long}&optionalClient=WEBSITE&client=WEBSITE&deviceType=WEBSITE&appVersion=8.1.1&locale=fa";
+        $home_url = "https://snappfood.ir/search/api/v1/desktop/new-home?lat={$foodParty->latitude}&long={$foodParty->longitude}&optionalClient=WEBSITE&client=WEBSITE&deviceType=WEBSITE&appVersion=8.1.1&locale=fa";
 
         $home_page = Http::withHeaders(static::$headers + ['Host' => 'snappfood.ir'])->get($home_url);
 

@@ -12,9 +12,10 @@ class FoodParty extends Model
     use Notifiable;
 
     protected $fillable = [
+        'user_id',
         'description',
-        'lat',
-        'long',
+        'latitude',
+        'longitude',
         'threshold',
         'active',
         'tg_chat_id',
@@ -22,8 +23,8 @@ class FoodParty extends Model
 
     protected $casts = [
         'id' => 'integer',
-        'lat' => 'decimal:6',
-        'long' => 'decimal:6',
+        'latitude' => 'double',
+        'longitude' => 'double',
         'active' => 'boolean',
         'threshold' => 'integer',
         'tg_chat_id' => 'integer',

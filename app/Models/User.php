@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'is_admin',
     ];
 
     /**
@@ -43,11 +44,17 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_admin' => 'boolean',
         ];
     }
 
     public function foodParties(): HasMany
     {
         return $this->hasMany(FoodParty::class, 'user_id');
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->is_admin;
     }
 }
