@@ -6,6 +6,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "dotswan/filament-map-picker": "^1.2",
         "filament/filament": "^3.2",
         "laravel-notification-channels/telegram": "^5.0",
         "laravel/framework": "^11.9",
