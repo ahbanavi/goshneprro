@@ -2,11 +2,17 @@
 
 namespace App\Notifications;
 
+use DateTime;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
+use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use NotificationChannels\Telegram\TelegramFile;
 
-class MarketPartyNotification extends Notification
+class MarketPartyNotification extends Notification implements ShouldQueue
 {
+    use Queueable;
+
     public function __construct(
         public array $product,
         public array $vendor,
@@ -38,5 +44,15 @@ class MarketPartyNotification extends Notification
             )
             ->photo($product['mainImage'] ?? 'https://raw.githubusercontent.com/ahbanavi/goshne/main/resource/default.jpg')
             ->button('🛒 سوپر مارکت ', $vendor_url);
+    }
+
+    public function middleware(object $notifiable, string $channel): array
+    {
+        return [new RateLimitedWithRedis('telegram')];
+    }
+
+    public function retryUntil(): DateTime
+    {
+        return now()->addMinutes(10);
     }
 }
