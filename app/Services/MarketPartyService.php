@@ -57,6 +57,7 @@ class MarketPartyService
         }
 
         $notifyCache = collect(Redis::hGetAll(config('goshne.ttl.market_party.notify.prefix').$marketParty->id));
+        $new_product_hashes = collect();
         foreach ($vendors as $vendor) {
             $products = Cache::remember(config('goshne.ttl.market_party.products.prefix').$vendor['data']['code'], config('goshne.ttl.market_party.products.ttl'), function () use ($headers, $vendor) {
                 $vendor_party_page = Http::withHeaders($headers)
@@ -77,7 +78,6 @@ class MarketPartyService
                 continue;
             }
 
-            $new_product_hashes = collect();
             foreach ($products as $product) {
                 $discount_price = $product['price'] - $product['discount'];
                 $product_hash = md5($product['id'].$discount_price.$product['vendorCode']);
@@ -91,15 +91,15 @@ class MarketPartyService
                     $new_product_hashes->push($product_hash);
                 }
             }
+        }
 
-            if ($new_product_hashes->isNotEmpty()) {
-                Redis::transaction(function (\Redis $redis) use ($marketParty, $new_product_hashes) {
-                    $redis->hmset(config('goshne.ttl.market_party.notify.prefix').$marketParty->id,
-                        $new_product_hashes->mapWithKeys(fn ($product_hash) => [$product_hash => 1])->toArray()
-                    );
-                    $redis->rawCommand('HEXPIRE', Redis::_prefix(config('goshne.ttl.market_party.notify.prefix').$marketParty->id), config('goshne.ttl.market_party.notify.ttl'), 'NX', 'FIELDS', $new_product_hashes->count(), ...$new_product_hashes->toArray());
-                });
-            }
+        if ($new_product_hashes->isNotEmpty()) {
+            Redis::transaction(function (\Redis $redis) use ($marketParty, $new_product_hashes) {
+                $redis->hmset(config('goshne.ttl.market_party.notify.prefix').$marketParty->id,
+                    $new_product_hashes->mapWithKeys(fn ($product_hash) => [$product_hash => 1])->toArray()
+                );
+                $redis->rawCommand('HEXPIRE', Redis::_prefix(config('goshne.ttl.market_party.notify.prefix').$marketParty->id), config('goshne.ttl.market_party.notify.ttl'), 'NX', 'FIELDS', $new_product_hashes->count(), ...$new_product_hashes->toArray());
+            });
         }
 
         return true;

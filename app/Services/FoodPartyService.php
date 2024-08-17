@@ -5,9 +5,9 @@ namespace App\Services;
 use App\Exceptions\SnappFoodPartyBlockedException;
 use App\Models\FoodParty;
 use App\Notifications\SnappFoodPartyNotification;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 
 class FoodPartyService
 {
@@ -76,6 +76,8 @@ class FoodPartyService
 
         $products = $party_data['data']['products'];
 
+        $notifyCache = collect(Redis::hGetAll(config('goshne.ttl.food_party.notify.prefix').$foodParty->id));
+        $new_product_hashes = collect();
         foreach ($products as $product) {
             if ($product['discountRatio'] < $foodParty->threshold) {
                 continue;
@@ -84,13 +86,21 @@ class FoodPartyService
             $discount_price = $product['price'] * (100 - $product['discountRatio']) / 100;
             $product_hash = md5($foodParty->id.$product['id'].$discount_price.$product['vendorCode']);
 
-            if (Cache::has($product_hash)) {
+            if ($notifyCache->has($product_hash)) {
                 continue;
             }
 
-            Cache::put($product_hash, true, now()->addHours(12));
-
             $foodParty->notify(new SnappFoodPartyNotification($product, $party_hashtag));
+            $new_product_hashes->push($product_hash);
+        }
+
+        if ($new_product_hashes->isNotEmpty()) {
+            Redis::transaction(function (\Redis $redis) use ($foodParty, $new_product_hashes) {
+                $redis->hmset(config('goshne.ttl.food_party.notify.prefix').$foodParty->id,
+                    $new_product_hashes->mapWithKeys(fn ($product_hash) => [$product_hash => 1])->toArray()
+                );
+                $redis->rawCommand('HEXPIRE', Redis::_prefix(config('goshne.ttl.food_party.notify.prefix').$foodParty->id), config('goshne.ttl.food_party.notify.ttl'), 'NX', 'FIELDS', $new_product_hashes->count(), ...$new_product_hashes->toArray());
+            });
         }
 
         return true;

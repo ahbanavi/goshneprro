@@ -12,6 +12,12 @@ return [
                 'prefix' => 'mpp_',
             ],
         ],
+        'food_party' => [
+            'notify' => [
+                'ttl' => env('FOOD_PARTY_NOTIFY_TTL', 12 * 60 * 60),
+                'prefix' => 'fpp_',
+            ],
+        ],
     ],
 
     'scheduler' => [
