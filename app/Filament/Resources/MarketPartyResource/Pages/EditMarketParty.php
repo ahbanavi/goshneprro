@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\MarketPartyResource\Pages;
 
+use App\Filament\Actions\ClearServiceCacheAction;
+use App\Filament\Actions\RunServiceAction;
 use App\Filament\Resources\MarketPartyResource;
-use Filament\Actions\DeleteAction;
+use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
 class EditMarketParty extends EditRecord
@@ -13,7 +15,9 @@ class EditMarketParty extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            DeleteAction::make(),
+            Actions\DeleteAction::make(),
+            ClearServiceCacheAction::make(),
+            RunServiceAction::make(),
         ];
     }
 }

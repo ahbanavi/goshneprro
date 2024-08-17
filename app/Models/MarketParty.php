@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Interfaces\Party;
+use App\Services\MarketPartyService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Notifications\Notifiable;
 
-class MarketParty extends Model
+class MarketParty extends Model implements Party
 {
     use Notifiable;
 
@@ -45,5 +47,20 @@ class MarketParty extends Model
     public function routeNotificationForTelegram($notification)
     {
         return $this->tg_chat_id;
+    }
+
+    public function run(): int
+    {
+        return MarketPartyService::get($this);
+    }
+
+    public function cacheLen(): int
+    {
+        return MarketPartyService::cacheLen($this);
+    }
+
+    public function clearCache(): bool
+    {
+        return MarketPartyService::clearCache($this);
     }
 }

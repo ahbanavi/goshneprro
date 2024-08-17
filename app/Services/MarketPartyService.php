@@ -34,7 +34,7 @@ class MarketPartyService
 
     private static string $url = 'https://snapp.express/api';
 
-    public static function get(MarketParty $marketParty): bool
+    public static function get(MarketParty $marketParty): int
     {
         $headers = static::$headers;
         $headers['x-metadata'] = json_encode(['lat' => $marketParty->latitude, 'long' => $marketParty->longitude]);
@@ -47,13 +47,13 @@ class MarketPartyService
             throw_if($vendor_page->status() === 403, MarketPartyBlockedException::class);
             Log::notice('MarketParty Error not 200: '.$vendor_page->status());
 
-            return false;
+            return -1;
         }
 
         $vendors = $vendor_page->json('data.vendorList.data.finalResult');
 
         if (empty($vendors)) {
-            return false;
+            return 0;
         }
 
         $notifyCache = collect(Redis::hGetAll(config('goshne.ttl.market_party.notify.prefix').$marketParty->id));
@@ -102,7 +102,17 @@ class MarketPartyService
             });
         }
 
-        return true;
+        return $new_product_hashes->count();
+    }
+
+    public static function cacheLen(MarketParty $marketParty): int
+    {
+        return Redis::hLen(config('goshne.ttl.market_party.notify.prefix').$marketParty->id);
+    }
+
+    public static function clearCache(MarketParty $marketParty): bool
+    {
+        return Redis::del(config('goshne.ttl.market_party.notify.prefix').$marketParty->id) !== false;
     }
 
     public function __invoke(): void

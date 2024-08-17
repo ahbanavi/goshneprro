@@ -27,7 +27,7 @@ class FoodPartyService
         'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0',
     ];
 
-    public static function get(FoodParty $foodParty): bool
+    public static function get(FoodParty $foodParty): int
     {
         $home_url = "https://snappfood.ir/search/api/v1/desktop/new-home?lat={$foodParty->latitude}&long={$foodParty->longitude}&optionalClient=WEBSITE&client=WEBSITE&deviceType=WEBSITE&appVersion=8.1.1&locale=fa";
 
@@ -37,7 +37,7 @@ class FoodPartyService
             throw_if($home_page->status() === 403, SnappFoodPartyBlockedException::class);
             Log::notice('SnappFoodParty Error not 200: '.$home_page->status().'url: '.$home_url);
 
-            return false;
+            return -1;
         }
 
         $home_data = $home_page->json();
@@ -45,11 +45,11 @@ class FoodPartyService
         if (isset($home_data['error'])) {
             Log::notice('SnappFoodParty Error: '.$home_data['error']);
 
-            return false;
+            return -1;
         }
 
         if ($home_data['data']['result'][1]['id'] != 8) {
-            return false;
+            return 0;
         }
 
         $party_url = $home_data['data']['result'][1]['data']['url'];
@@ -59,7 +59,7 @@ class FoodPartyService
             throw_if($party_page->status() === 403, SnappFoodPartyBlockedException::class);
             Log::notice('SnappFoodParty Error not 200: '.$party_page->status().'url: '.$party_url);
 
-            return false;
+            return -1;
         }
 
         $party_data = $party_page->json();
@@ -67,7 +67,7 @@ class FoodPartyService
         if (isset($party_data['error'])) {
             Log::notice('SnappFoodParty Error: '.$party_data['error']);
 
-            return false;
+            return -1;
         }
 
         $party_title = $party_data['data']['title'];
@@ -103,7 +103,17 @@ class FoodPartyService
             });
         }
 
-        return true;
+        return $new_product_hashes->count();
+    }
+
+    public static function cacheLen(FoodParty $foodParty): int
+    {
+        return Redis::hLen(config('goshne.ttl.food_party.notify.prefix').$foodParty->id);
+    }
+
+    public static function clearCache(FoodParty $foodParty): bool
+    {
+        return Redis::del(config('goshne.ttl.food_party.notify.prefix').$foodParty->id) !== false;
     }
 
     public function __invoke(): void
