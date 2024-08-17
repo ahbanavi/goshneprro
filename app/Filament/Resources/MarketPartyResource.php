@@ -57,7 +57,7 @@ class MarketPartyResource extends Resource
                 TextInput::make('latitude')->required()->readOnly(),
                 TextInput::make('longitude')->required()->readOnly(),
                 Repeater::make('products')->nullable()->defaultItems(0)->columnSpanFull()->collapsible()
-                    ->hint('Product names to be included in the market party')
+                    ->hint('Product names to be included in the market party, supports wildcard (*)')
                     ->simple(
                         TextInput::make('name')->extraAttributes(['dir' => 'rtl'])->autocomplete(false)->string()->distinct()->required(),
                     ),

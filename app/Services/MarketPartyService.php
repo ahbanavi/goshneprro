@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Str;
 
 class MarketPartyService
 {
@@ -85,7 +86,7 @@ class MarketPartyService
                     continue;
                 }
 
-                if (in_array($product['title'], $marketParty->products) || $product['discountRatio'] >= $marketParty->threshold) {
+                if (collect($marketParty->products)->contains(fn ($pattern) => Str::is($pattern, $product['title'])) || $product['discountRatio'] >= $marketParty->threshold) {
                     $marketParty->notify(new MarketPartyNotification(product: $product, vendor: $vendor['data']));
                     $new_product_hashes->push($product_hash);
                 }
