@@ -57,4 +57,9 @@ class User extends Authenticatable
     {
         return $this->is_admin;
     }
+
+    public function marketParties(): HasMany
+    {
+        return $this->hasMany(MarketParty::class, 'user_id');
+    }
 }

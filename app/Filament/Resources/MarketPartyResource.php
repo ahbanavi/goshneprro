@@ -2,10 +2,11 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\FoodPartyResource\Pages;
-use App\Models\FoodParty;
+use App\Filament\Resources\MarketPartyResource\Pages;
+use App\Models\MarketParty;
 use Dotswan\MapPicker\Fields\Map;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -24,9 +25,11 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
-class FoodPartyResource extends Resource
+class MarketPartyResource extends Resource
 {
-    protected static ?string $model = FoodParty::class;
+    protected static ?string $model = MarketParty::class;
+
+    protected static ?string $slug = 'market-parties';
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
@@ -34,9 +37,11 @@ class FoodPartyResource extends Resource
     {
         return $form
             ->schema([
+                Placeholder::make('created_at')->hiddenOn('create')->label('Created Date')->content(fn (?MarketParty $record): string => $record?->created_at?->diffForHumans() ?? '-'),
+                Placeholder::make('updated_at')->hiddenOn('create')->label('Last Modified Date')->content(fn (?MarketParty $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
                 TextInput::make('description')->required()->maxLength(255),
                 Select::make('user_id')->relationship('user', 'name')->searchable()->preload()->visible(auth()->user()->isAdmin()),
-                TextInput::make('threshold')->label('Discount Threshold')->integer()->hint('between 0 and 99')->default(0)->minValue(0)->maxValue(99)->required(),
+                TextInput::make('threshold')->label('Discount Threshold')->integer()->hint('between 0 and 99, 100 for disable')->default(100)->minValue(0)->maxValue(100)->required(),
                 TextInput::make('tg_chat_id')->label('Telegram Chat ID')->integer()->hint('you can get it with https://t.me/username_to_id_bot')->required(),
                 Map::make('location')->label('Location')->columnSpanFull()->default([
                     'lat' => config('foodparty.default_latitude'),
@@ -51,8 +56,11 @@ class FoodPartyResource extends Resource
                     ->zoom(13)->detectRetina()->showMyLocationButton()->extraTileControl([])->extraControl(['zoomDelta' => 1, 'zoomSnap' => 2])->dehydrated(false),
                 TextInput::make('latitude')->required()->readOnly(),
                 TextInput::make('longitude')->required()->readOnly(),
-                Placeholder::make('created_at')->hiddenOn('create')->label('Created Date')->content(fn (?FoodParty $record): string => $record?->created_at?->diffForHumans() ?? '-'),
-                Placeholder::make('updated_at')->hiddenOn('create')->label('Last Modified Date')->content(fn (?FoodParty $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
+                Repeater::make('products')->nullable()->defaultItems(0)->columnSpanFull()->collapsible()
+                    ->hint('Product names to be included in the market party')
+                    ->simple(
+                        TextInput::make('name')->extraAttributes(['dir' => 'rtl'])->autocomplete(false)->string()->distinct()->required(),
+                    ),
                 Toggle::make('active')->required()->default(true),
             ]);
     }
@@ -64,7 +72,7 @@ class FoodPartyResource extends Resource
                 TextColumn::make('id')->label('#')->sortable(),
                 TextColumn::make('user.name')->visible(fn ($livewire) => $livewire->activeTab === 'all'),
                 TextInputColumn::make('description')->searchable()->rules(['string', 'max:255']),
-                TextInputColumn::make('threshold')->sortable()->rules(['integer', 'min:0', 'max:99']),
+                TextInputColumn::make('threshold')->sortable()->rules(['integer', 'min:0', 'max:100']),
                 TextColumn::make('tg_chat_id'),
                 TextColumn::make('created_at')->dateTime()->label('Created')->sortable(),
                 TextColumn::make('updated_at')->dateTime()->label('Updated')->sortable(),
@@ -73,6 +81,7 @@ class FoodPartyResource extends Resource
             ->filters([
                 TernaryFilter::make('active')->trueLabel('Active')->falseLabel('Inactive')->placeholder('All'),
                 SelectFilter::make('user')->visible(auth()->user()->isAdmin())->relationship('user', 'name')->searchable()->preload()->multiple(),
+
             ])
             ->actions([
                 EditAction::make(),
@@ -85,19 +94,12 @@ class FoodPartyResource extends Resource
             ]);
     }
 
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
-
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListFoodParties::route('/'),
-            'create' => Pages\CreateFoodParty::route('/create'),
-            'edit' => Pages\EditFoodParty::route('/{record}/edit'),
+            'index' => Pages\ListMarketParties::route('/'),
+            'create' => Pages\CreateMarketParty::route('/create'),
+            'edit' => Pages\EditMarketParty::route('/{record}/edit'),
         ];
     }
 
