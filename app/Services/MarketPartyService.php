@@ -104,4 +104,13 @@ class MarketPartyService
 
         return true;
     }
+
+    public function __invoke(): void
+    {
+        $marketParties = MarketParty::active()->get();
+
+        foreach ($marketParties as $marketParty) {
+            static::get($marketParty);
+        }
+    }
 }
