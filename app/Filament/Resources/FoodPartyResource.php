@@ -39,13 +39,13 @@ class FoodPartyResource extends Resource
                 TextInput::make('threshold')->label('Discount Threshold')->integer()->hint('between 0 and 99')->default(0)->minValue(0)->maxValue(99)->required(),
                 TextInput::make('tg_chat_id')->label('Telegram Chat ID')->integer()->hint('you can get it with https://t.me/username_to_id_bot')->required(),
                 Map::make('location')->label('Location')->columnSpanFull()->default([
-                    'lat' => config('foodparty.default_latitude'),
-                    'lng' => config('foodparty.default_longitude'),
+                    'lat' => config('goshne.default.latitude'),
+                    'lng' => config('goshne.default.longitude'),
                 ])->afterStateUpdated(function (Set $set, ?array $state): void {
                     $set('latitude', $state['lat']);
                     $set('longitude', $state['lng']);
                 })->afterStateHydrated(function ($state, $record, Set $set): void {
-                    $set('location', ['lat' => $record->latitude ?? config('foodparty.default_latitude'), 'lng' => $record->longitude ?? config('foodparty.default_longitude')]);
+                    $set('location', ['lat' => $record->latitude ?? config('goshne.default.latitude'), 'lng' => $record->longitude ?? config('goshne.default.longitude')]);
                 })->extraStyles(['border-radius: 15px'])->liveLocation()->showMarker()->markerColor('#22c55eff')
                     ->showFullscreenControl()->showZoomControl()->draggable()->tilesUrl('https://tile.openstreetmap.de/{z}/{x}/{y}.png')
                     ->zoom(13)->detectRetina()->showMyLocationButton()->extraTileControl([])->extraControl(['zoomDelta' => 1, 'zoomSnap' => 2])->dehydrated(false),

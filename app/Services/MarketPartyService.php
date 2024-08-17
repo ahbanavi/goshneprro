@@ -56,9 +56,9 @@ class MarketPartyService
             return false;
         }
 
-        $notifyCache = collect(Redis::hGetAll(config('ttl.market_party.notify.prefix').$marketParty->id));
+        $notifyCache = collect(Redis::hGetAll(config('goshne.ttl.market_party.notify.prefix').$marketParty->id));
         foreach ($vendors as $vendor) {
-            $products = Cache::remember(config('ttl.market_party.products.prefix').$vendor['data']['code'], config('ttl.market_party.products.ttl'), function () use ($headers, $vendor) {
+            $products = Cache::remember(config('goshne.ttl.market_party.products.prefix').$vendor['data']['code'], config('goshne.ttl.market_party.products.ttl'), function () use ($headers, $vendor) {
                 $vendor_party_page = Http::withHeaders($headers)
                     ->withBody('{"operationName":"getSuperMarketMarketParty","variables":{"variable":"'.$vendor['data']['code'].'","page":0,"pageSize":1000},"query":"query getSuperMarketMarketParty($variable: String, $page: Int, $pageSize: Int) {\n  superMarketMarketParty(variable: $variable, page: $page, pageSize: $pageSize) {\n    errors {\n      field\n      message\n      __typename\n    }\n    status\n    data {\n      title\n      firstActivePeriodStartRFC\n      firstActivePeriodEndRFC\n      currentTimeRFC\n      activePeriodTitle\n      inactivePeriodTitle\n      capacityPerOrder\n      config {\n        coverImage\n        moreImage\n        mainImage\n        backgroundColor\n        textColor\n        __typename\n      }\n      products {\n        totalCount\n        pageSize\n        list {\n          id\n          productVariationId\n          price\n          discountRatio\n          productVariationTitle\n          deliveryFee\n          stock\n          title\n          discount\n          image\n          vendorCode\n          vendorId\n          capacity\n          vendorTitle\n          description\n          mainImage\n          minOrder\n          totalStock\n          menuCategoryId\n          isSpecialBackend\n          isSpecial\n          isMarketParty\n          marketPartyCapacity\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}"}')
                     ->post(static::$url);
@@ -94,10 +94,10 @@ class MarketPartyService
 
             if ($new_product_hashes->isNotEmpty()) {
                 Redis::transaction(function (\Redis $redis) use ($marketParty, $new_product_hashes) {
-                    $redis->hmset(config('ttl.market_party.notify.prefix').$marketParty->id,
+                    $redis->hmset(config('goshne.ttl.market_party.notify.prefix').$marketParty->id,
                         $new_product_hashes->mapWithKeys(fn ($product_hash) => [$product_hash => 1])->toArray()
                     );
-                    $redis->rawCommand('HEXPIRE', Redis::_prefix(config('ttl.market_party.notify.prefix').$marketParty->id), config('ttl.market_party.notify.ttl'), 'NX', 'FIELDS', $new_product_hashes->count(), ...$new_product_hashes->toArray());
+                    $redis->rawCommand('HEXPIRE', Redis::_prefix(config('goshne.ttl.market_party.notify.prefix').$marketParty->id), config('goshne.ttl.market_party.notify.ttl'), 'NX', 'FIELDS', $new_product_hashes->count(), ...$new_product_hashes->toArray());
                 });
             }
         }
