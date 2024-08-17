@@ -3,15 +3,14 @@
 namespace App\Filament\Widgets;
 
 use App\Models\FoodParty;
+use App\Models\MarketParty;
 use App\Models\User;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class StatsOverview extends BaseWidget
 {
-    protected static ?int $sort = -5;
-
-    protected int|string|array $columnStart = 2;
+    protected static ?int $sort = 1;
 
     protected function getStats(): array
     {
@@ -20,11 +19,8 @@ class StatsOverview extends BaseWidget
             Stat::make('Active Food Parties', FoodParty::active()->count()),
             Stat::make('Total Users', User::count()),
             Stat::make('Admin Users', User::where('is_admin', true)->count()),
+            Stat::make('Total Market Parties', MarketParty::count()),
+            Stat::make('Active Market Parties', MarketParty::active()->count()),
         ];
-    }
-
-    protected function getColumns(): int
-    {
-        return 2;
     }
 }
