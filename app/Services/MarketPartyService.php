@@ -7,6 +7,7 @@ use App\Models\MarketParty;
 use App\Notifications\MarketPartyNotification;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 
 class MarketPartyService
 {
@@ -33,6 +34,8 @@ class MarketPartyService
 
     public static function get(MarketParty $marketParty): bool
     {
+        $cache = collect(Redis::hGetAll('mp_'.$marketParty->id));
+
         $headers = static::$headers;
         $headers['x-metadata'] = json_encode(['lat' => $marketParty->latitude, 'long' => $marketParty->longitude]);
 
@@ -71,10 +74,28 @@ class MarketPartyService
                 continue;
             }
 
+            $new_product_hashes = collect();
             foreach ($products as $product) {
+                $discount_price = $product['price'] - $product['discount'];
+                $product_hash = md5($product['id'].$discount_price.$product['vendorCode']);
+
+                if ($cache->has($product_hash)) {
+                    continue;
+                }
+
                 if ($product['discountRatio'] >= $marketParty->threshold) {
                     $marketParty->notify(new MarketPartyNotification(product: $product, vendor: $vendor['data']));
+                    $new_product_hashes->push($product_hash);
                 }
+            }
+
+            if ($new_product_hashes->isNotEmpty()) {
+                Redis::transaction(function (\Redis $redis) use ($marketParty, $new_product_hashes) {
+                    $redis->hmset('mp_'.$marketParty->id,
+                        $new_product_hashes->mapWithKeys(fn ($product_hash) => [$product_hash => 1])->toArray()
+                    );
+                    $redis->rawCommand('HEXPIRE', Redis::_prefix('mp_'.$marketParty->id), 60 * 60 * 12, 'NX', 'FIELDS', $new_product_hashes->count(), ...$new_product_hashes->toArray());
+                });
             }
         }
 
