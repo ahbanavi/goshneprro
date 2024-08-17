@@ -83,7 +83,7 @@ class MarketPartyService
                     continue;
                 }
 
-                if ($product['discountRatio'] >= $marketParty->threshold) {
+                if (in_array($product['title'], $marketParty->products) || $product['discountRatio'] >= $marketParty->threshold) {
                     $marketParty->notify(new MarketPartyNotification(product: $product, vendor: $vendor['data']));
                     $new_product_hashes->push($product_hash);
                 }

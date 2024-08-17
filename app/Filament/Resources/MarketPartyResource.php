@@ -6,6 +6,7 @@ use App\Filament\Resources\MarketPartyResource\Pages;
 use App\Models\MarketParty;
 use Dotswan\MapPicker\Fields\Map;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -36,6 +37,8 @@ class MarketPartyResource extends Resource
     {
         return $form
             ->schema([
+                Placeholder::make('created_at')->hiddenOn('create')->label('Created Date')->content(fn (?MarketParty $record): string => $record?->created_at?->diffForHumans() ?? '-'),
+                Placeholder::make('updated_at')->hiddenOn('create')->label('Last Modified Date')->content(fn (?MarketParty $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
                 TextInput::make('description')->required()->maxLength(255),
                 Select::make('user_id')->relationship('user', 'name')->searchable()->preload()->visible(auth()->user()->isAdmin()),
                 TextInput::make('threshold')->label('Discount Threshold')->integer()->hint('between 0 and 99, 100 for disable')->default(100)->minValue(0)->maxValue(100)->required(),
@@ -53,8 +56,11 @@ class MarketPartyResource extends Resource
                     ->zoom(13)->detectRetina()->showMyLocationButton()->extraTileControl([])->extraControl(['zoomDelta' => 1, 'zoomSnap' => 2])->dehydrated(false),
                 TextInput::make('latitude')->required()->readOnly(),
                 TextInput::make('longitude')->required()->readOnly(),
-                Placeholder::make('created_at')->hiddenOn('create')->label('Created Date')->content(fn (?MarketParty $record): string => $record?->created_at?->diffForHumans() ?? '-'),
-                Placeholder::make('updated_at')->hiddenOn('create')->label('Last Modified Date')->content(fn (?MarketParty $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
+                Repeater::make('products')->nullable()->defaultItems(0)->columnSpanFull()->collapsible()
+                    ->hint('Product names to be included in the market party')
+                    ->simple(
+                        TextInput::make('name')->extraAttributes(['dir' => 'rtl'])->autocomplete(false)->string()->distinct()->required(),
+                    ),
                 Toggle::make('active')->required()->default(true),
             ]);
     }

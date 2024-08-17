@@ -19,6 +19,7 @@ class MarketParty extends Model
         'tg_chat_id',
         'active',
         'user_id',
+        'products',
     ];
 
     protected $casts = [
@@ -28,6 +29,7 @@ class MarketParty extends Model
         'threshold' => 'integer',
         'tg_chat_id' => 'integer',
         'active' => 'boolean',
+        'products' => 'array',
     ];
 
     public function user(): BelongsTo
