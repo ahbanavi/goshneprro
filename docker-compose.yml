@@ -24,7 +24,7 @@ services:
         depends_on:
             - pgsql
             - redis
-            - mailpit
+            # - mailpit
     pgsql:
         image: 'postgres:15'
         ports:
