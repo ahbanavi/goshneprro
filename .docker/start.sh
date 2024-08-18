@@ -15,9 +15,9 @@ if [ "$role" = "app" ]; then
 
     exec php-fpm
 
-elif [ "$role" = "queue" ]; then
+elif [ "$role" = "worker" ]; then
 
-    echo "Running the queue..."
+    echo "Running the worker..."
     php /var/www/html/artisan queue:work --sleep=15 --tries=5 --max-time=3600
 
 elif [ "$role" = "scheduler" ]; then

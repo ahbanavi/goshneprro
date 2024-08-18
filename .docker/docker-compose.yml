@@ -1,0 +1,85 @@
+services:
+    app:
+        image: ghcr.io/ahbanavi/goshneprro:latest
+        container_name: goshneprro_app_main
+        restart: always
+        ports:
+            - "10090:9000"
+        environment:
+            APP_ENV: ${APP_ENV:-production}
+            CONTAINER_ROLE: app
+        env_file: ".env"
+        depends_on:
+            - pgsql
+            - redis
+
+    scheduler:
+        image: ghcr.io/ahbanavi/goshneprro:latest
+        container_name: goshneprro_app_scheduler
+        restart: always
+        environment:
+            APP_ENV: ${APP_ENV:-production}
+            CONTAINER_ROLE: scheduler
+        env_file: ".env"
+        depends_on:
+            - app
+
+    worker:
+        image: ghcr.io/ahbanavi/goshneprro:latest
+        container_name: goshneprro_app_worker
+        restart: always
+        environment:
+            APP_ENV: ${APP_ENV:-production}
+            CONTAINER_ROLE: worker
+        env_file: ".env"
+        depends_on:
+            - app
+
+    pgsql:
+        image: 'postgres:15'
+        container_name: goshneprro_pgsql
+#        ports:
+#            - '${FORWARD_DB_PORT:-5432}:5432'
+        environment:
+            PGPASSWORD: '${DB_PASSWORD:-secret}'
+            POSTGRES_DB: '${DB_DATABASE}'
+            POSTGRES_USER: '${DB_USERNAME}'
+            POSTGRES_PASSWORD: '${DB_PASSWORD:-secret}'
+        volumes:
+            - 'goshneprro-pgsql:/var/lib/postgresql/data'
+        healthcheck:
+            test:
+                - CMD
+                - pg_isready
+                - '-q'
+                - '-d'
+                - '${DB_DATABASE}'
+                - '-U'
+                - '${DB_USERNAME}'
+            retries: 3
+            timeout: 5s
+
+    redis:
+        image: 'redis:alpine'
+        container_name: goshneprro_redis
+#        ports:
+#            - '${FORWARD_REDIS_PORT:-6379}:6379'
+        volumes:
+            - 'goshneprro-redis:/data'
+        healthcheck:
+            test:
+                - CMD
+                - redis-cli
+                - ping
+            retries: 3
+            timeout: 5s
+
+networks:
+    default:
+        name: goshneprro_server
+
+volumes:
+    goshneprro-pgsql:
+        driver: local
+    goshneprro-redis:
+        driver: local
