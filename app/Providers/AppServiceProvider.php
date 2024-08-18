@@ -27,7 +27,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('telegram', function (object $notifiable) {
             return [
                 Limit::perSecond(30),
-                Limit::perMinute(40)->by($notifiable->notifiables->first()->tg_chat_id),
+                Limit::perMinute(300)->by($notifiable->notifiables->first()->tg_chat_id),
             ];
         });
     }
