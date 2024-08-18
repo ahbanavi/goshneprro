@@ -95,6 +95,8 @@ class MarketPartyService
                     $new_products->push([
                         'product' => $product,
                         'vendor' => $vendor['data'],
+                        'total_price' => $discount_price + ($vendor['data']['isPro'] ? 0 : $vendor['data']['deliveryFee']),
+                        'min_capacity' => min($product['marketPartyCapacity'], $product['capacity']),
                     ]);
                     $new_product_hashes->push($product_hash);
                 }
@@ -103,8 +105,9 @@ class MarketPartyService
 
         $sorted = $new_products->groupBy(fn ($item) => $item['product']['title'])
             ->map(fn ($group) => $group->sortBy([
-                ['vendor.isPro', 'desc'],
-                ['product.discountRatio', 'desc'],
+                ['total_price', 'asc'],
+                ['min_capacity', 'desc'],
+                ['minOrder', 'asc'],
             ])->take(
                 $marketParty->max_item === 0 ? $group->count() : $marketParty->max_item
             ))->flatten(1);
