@@ -27,9 +27,12 @@ class AppServiceProvider extends ServiceProvider
         Password::defaults(fn () => Password::min(8)->mixedCase());
 
         RateLimiter::for('telegram', function (object $notifiable) {
+            $chat_id = $notifiable->notifiables->first()->tg_chat_id;
+            $limit = $chat_id < 0 ? 20 : 60;
+
             return [
-                Limit::perSecond(30),
-                Limit::perMinute(300)->by($notifiable->notifiables->first()->tg_chat_id),
+                Limit::perSecond(3),
+                Limit::perMinute($limit)->by($chat_id),
             ];
         });
 
