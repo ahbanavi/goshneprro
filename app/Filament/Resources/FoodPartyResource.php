@@ -6,10 +6,12 @@ use App\Filament\Resources\FoodPartyResource\Pages;
 use App\Models\FoodParty;
 use Dotswan\MapPicker\Fields\Map;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -23,6 +25,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
 
 class FoodPartyResource extends Resource
 {
@@ -34,9 +37,11 @@ class FoodPartyResource extends Resource
     {
         return $form
             ->schema([
+                Placeholder::make('created_at')->hiddenOn('create')->label('Created Date')->content(fn (?FoodParty $record): string => $record?->created_at?->diffForHumans() ?? '-'),
+                Placeholder::make('updated_at')->hiddenOn('create')->label('Last Modified Date')->content(fn (?FoodParty $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
                 TextInput::make('description')->required()->maxLength(255),
                 Select::make('user_id')->relationship('user', 'name')->searchable()->preload()->visible(auth()->user()->isAdmin()),
-                TextInput::make('threshold')->label('Discount Threshold')->integer()->hint('between 0 and 99')->default(0)->minValue(0)->maxValue(99)->required(),
+                TextInput::make('threshold')->label('Global Discount Threshold')->integer()->hint('between 0 and 99')->default(0)->minValue(0)->maxValue(99)->required(),
                 TextInput::make('tg_chat_id')->label('Telegram Chat ID')->integer()->hint('you can get it with https://t.me/username_to_id_bot')->required(),
                 Map::make('location')->label('Location')->columnSpanFull()->default([
                     'lat' => config('goshne.default.latitude'),
@@ -51,8 +56,20 @@ class FoodPartyResource extends Resource
                     ->zoom(13)->detectRetina()->showMyLocationButton()->extraTileControl([])->extraControl(['zoomDelta' => 1, 'zoomSnap' => 2])->dehydrated(false),
                 TextInput::make('latitude')->required()->readOnly(),
                 TextInput::make('longitude')->required()->readOnly(),
-                Placeholder::make('created_at')->hiddenOn('create')->label('Created Date')->content(fn (?FoodParty $record): string => $record?->created_at?->diffForHumans() ?? '-'),
-                Placeholder::make('updated_at')->hiddenOn('create')->label('Last Modified Date')->content(fn (?FoodParty $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
+                Repeater::make('vendors')->nullable()->defaultItems(0)->grid(2)->columnSpanFull()->collapsible()->cloneable()
+                    ->hint('Vendors codes to be included in the food party apart from global threshold')
+                    ->schema([
+                        Placeholder::make('vendor_url')->label('')
+                            ->content(function (Get $get) {
+                                if (empty($get('c'))) {
+                                    return '';
+                                } else {
+                                    return new HtmlString('<a target="_blank" href="https://snappfood.ir/restaurant/menu/'.$get('c').'">Vendor URL</a>');
+                                }
+                            }),
+                        TextInput::make('c')->name('Code')->autocomplete(false)->string()->distinct()->required()->hint('Could be found at the end of the vendor URL'),
+                        TextInput::make('t')->label('Threshold')->integer()->hint('0...100, 100=disable, 0=all')->default(0)->minValue(0)->maxValue(100),
+                    ]),
                 Toggle::make('active')->required()->default(true),
             ]);
     }

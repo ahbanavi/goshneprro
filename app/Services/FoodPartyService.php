@@ -79,10 +79,6 @@ class FoodPartyService
         $notifyCache = collect(Redis::hGetAll(config('goshne.ttl.food_party.notify.prefix').$foodParty->id));
         $new_product_hashes = collect();
         foreach ($products as $product) {
-            if ($product['discountRatio'] < $foodParty->threshold) {
-                continue;
-            }
-
             $discount_price = $product['price'] * (100 - $product['discountRatio']) / 100;
             $product_hash = md5($foodParty->id.$product['id'].$discount_price.$product['vendorCode']);
 
@@ -90,8 +86,14 @@ class FoodPartyService
                 continue;
             }
 
-            $foodParty->notify(new SnappFoodPartyNotification($product, $party_hashtag));
-            $new_product_hashes->push($product_hash);
+            if ($product['discountRatio'] >= $foodParty->threshold
+                || collect($foodParty->vendors)->contains(
+                    fn ($vendor) => $vendor['c'] == $product['vendorCode'] && $product['discountRatio'] >= $vendor['t']
+                )
+            ) {
+                $foodParty->notify(new SnappFoodPartyNotification($product, $party_hashtag));
+                $new_product_hashes->push($product_hash);
+            }
         }
 
         if ($new_product_hashes->isNotEmpty()) {
