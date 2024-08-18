@@ -27,7 +27,7 @@ class UserResource extends Resource
                 TextInput::make('name')->maxLength('255')->required(),
                 TextInput::make('email')->email()->required()->unique(ignoreRecord: true),
                 TextInput::make('password')->rule(Password::default())->password()->dehydrated(fn (?string $state): bool => filled($state))->required(fn (string $operation): bool => $operation === 'create'),
-                Toggle::make('is_admin')->label('Admin')->default(false)->disabled(fn (User $record) => auth()->user()->is($record)),
+                Toggle::make('is_admin')->label('Admin')->default(false)->disabled(fn (?User $record) => auth()->user()->is($record)),
             ]);
     }
 
