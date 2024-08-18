@@ -86,7 +86,11 @@ class MarketPartyService
                     continue;
                 }
 
-                if (collect($marketParty->products)->contains(fn ($pattern) => Str::is($pattern, $product['title'])) || $product['discountRatio'] >= $marketParty->threshold) {
+                if ($product['discountRatio'] >= $marketParty->threshold
+                    || collect($marketParty->products)->contains(
+                        fn ($pattern) => Str::is($pattern['n'], $product['title']) && $product['discountRatio'] >= $pattern['t']
+                    )
+                ) {
                     $marketParty->notify(new MarketPartyNotification(product: $product, vendor: $vendor['data']));
                     $new_product_hashes->push($product_hash);
                 }

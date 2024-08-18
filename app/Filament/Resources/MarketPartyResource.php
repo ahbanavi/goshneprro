@@ -41,7 +41,7 @@ class MarketPartyResource extends Resource
                 Placeholder::make('updated_at')->hiddenOn('create')->label('Last Modified Date')->content(fn (?MarketParty $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
                 TextInput::make('description')->required()->maxLength(255),
                 Select::make('user_id')->relationship('user', 'name')->searchable()->preload()->visible(auth()->user()->isAdmin()),
-                TextInput::make('threshold')->label('Discount Threshold')->integer()->hint('between 0 and 99, 100 for disable')->default(100)->minValue(0)->maxValue(100)->required(),
+                TextInput::make('threshold')->label('Global Discount Threshold')->integer()->hint('between 0 and 99, 100 for disable, 0 for all')->default(100)->minValue(0)->maxValue(100)->required(),
                 TextInput::make('tg_chat_id')->label('Telegram Chat ID')->integer()->hint('you can get it with https://t.me/username_to_id_bot')->required(),
                 Map::make('location')->label('Location')->columnSpanFull()->default([
                     'lat' => config('goshne.default.latitude'),
@@ -56,11 +56,12 @@ class MarketPartyResource extends Resource
                     ->zoom(13)->detectRetina()->showMyLocationButton()->extraTileControl([])->extraControl(['zoomDelta' => 1, 'zoomSnap' => 2])->dehydrated(false),
                 TextInput::make('latitude')->required()->readOnly(),
                 TextInput::make('longitude')->required()->readOnly(),
-                Repeater::make('products')->nullable()->defaultItems(0)->columnSpanFull()->collapsible()
+                Repeater::make('products')->nullable()->defaultItems(0)->grid(2)->collapsible()->cloneable()->columnSpanFull()
                     ->hint('Product names to be included in the market party, supports wildcard (*)')
-                    ->simple(
-                        TextInput::make('name')->extraAttributes(['dir' => 'rtl'])->autocomplete(false)->string()->distinct()->required(),
-                    ),
+                    ->schema([
+                        TextInput::make('n')->name('Name')->extraAttributes(['dir' => 'rtl'])->autocomplete(false)->string()->distinct()->required(),
+                        TextInput::make('t')->label('Threshold')->integer()->hint('0...100, 100=disable, 0=all')->default(0)->minValue(0)->maxValue(100),
+                    ]),
                 Toggle::make('active')->required()->default(true),
             ]);
     }
