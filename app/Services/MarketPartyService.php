@@ -107,7 +107,7 @@ class MarketPartyService
             ->map(fn ($group) => $group->sortBy([
                 ['total_price', 'asc'],
                 ['min_capacity', 'desc'],
-                ['minOrder', 'asc'],
+                ['product.minOrder', 'asc'],
             ])->take(
                 $marketParty->max_item === 0 ? $group->count() : $marketParty->max_item
             ))->flatten(1);
