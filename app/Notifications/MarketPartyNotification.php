@@ -16,6 +16,7 @@ class MarketPartyNotification extends Notification implements ShouldQueue
     public function __construct(
         public array $product,
         public array $vendor,
+        public bool $isLast = false,
     ) {}
 
     public function via($notifiable): array
@@ -32,6 +33,7 @@ class MarketPartyNotification extends Notification implements ShouldQueue
         $discount_price = $product['price'] - $product['discount'];
 
         return TelegramFile::create()->parseMode('HTML')
+            ->disableNotification(! $this->isLast)
             ->content(
                 "🍎 <b>{$product['title']}</b>\n".
                 "🛒 <a href=\"{$vendor_url}\"> {$vendor['title']}</a>".($vendor['isPro'] ? '🌟' : '')."\n".

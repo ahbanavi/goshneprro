@@ -58,6 +58,7 @@ class MarketPartyService
 
         $notifyCache = collect(Redis::hGetAll(config('goshne.ttl.market_party.notify.prefix').$marketParty->id));
         $new_product_hashes = collect();
+        $new_products = collect();
         foreach ($vendors as $vendor) {
             $products = Cache::remember(config('goshne.ttl.market_party.products.prefix').$vendor['data']['code'], config('goshne.ttl.market_party.products.ttl'), function () use ($headers, $vendor) {
                 $vendor_party_page = Http::withHeaders($headers)
@@ -91,11 +92,26 @@ class MarketPartyService
                         fn ($pattern) => Str::is($pattern['n'], $product['title']) && $product['discountRatio'] >= $pattern['t']
                     )
                 ) {
-                    $marketParty->notify(new MarketPartyNotification(product: $product, vendor: $vendor['data']));
+                    $new_products->push([
+                        'product' => $product,
+                        'vendor' => $vendor['data'],
+                    ]);
                     $new_product_hashes->push($product_hash);
                 }
             }
         }
+
+        $sorted = $new_products->groupBy(fn ($item) => $item['product']['title'])
+            ->map(fn ($group) => $group->sortBy([
+                ['vendor.isPro', 'desc'],
+                ['product.discountRatio', 'desc'],
+            ])->take(
+                $marketParty->max_item === 0 ? $group->count() : $marketParty->max_item
+            ))->flatten(1);
+
+        $sorted->each(function ($item) use ($marketParty, $sorted) {
+            $marketParty->notify(new MarketPartyNotification(product: $item['product'], vendor: $item['vendor'], isLast: $item === $sorted->last()));
+        });
 
         if ($new_product_hashes->isNotEmpty()) {
             Redis::transaction(function (\Redis $redis) use ($marketParty, $new_product_hashes) {
@@ -106,7 +122,7 @@ class MarketPartyService
             });
         }
 
-        return $new_product_hashes->count();
+        return $sorted->count();
     }
 
     public static function cacheLen(MarketParty $marketParty): int

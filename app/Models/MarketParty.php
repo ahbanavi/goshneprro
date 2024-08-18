@@ -22,6 +22,7 @@ class MarketParty extends Model implements Party
         'active',
         'user_id',
         'products',
+        'max_item',
     ];
 
     protected $casts = [
