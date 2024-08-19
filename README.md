@@ -47,6 +47,8 @@ docker run --rm \
 
 ### Production Environment (Docker)
 
+You can use the following commands to set up the app in a production environment using Docker.
+
 ```bash
 # create a directory for the app to hold .env and docker-compose.yml
 mkdir goshneprro-docker
@@ -68,7 +70,38 @@ docker compose exec app php artisan migrate
 docker compose exec app php artisan make:admin-user
 ```
 
-### Update
+#### Web Server Configuration (Nginx)
+
+You can use any web server you want and forward the requests to the app container fpm port (above docker-compose file uses port `10090`).  
+
+But here is an example of Nginx setup and configuration on Ubuntu/Debian systems after setting up the app as mentioned above:
+
+```bash
+# Install Nginx
+sudo apt update
+sudo apt install nginx
+
+# Start and enable Nginx
+sudo systemctl start nginx
+sudo systemctl enable nginx
+
+# Create a new Nginx configuration file
+curl -o /etc/nginx/sites-available/example.com.conf https://raw.githubusercontent.com/ahbanavi/goshneprro/main/.docker/nginx/nginx.conf
+
+# Enable the new configuration
+sudo ln -s /etc/nginx/sites-available/example.com.conf /etc/nginx/sites-enabled/
+
+# Copy app public directory to the Nginx root directory
+docker cp goshneprro_app_main:/var/www/html/public /var/www/example.com/public
+
+# Test Nginx configuration
+nginx -t
+
+# Reload Nginx
+nginx -s reload
+```
+
+#### Update
     
 ```bash
 cd goshneprro-docker
