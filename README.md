@@ -1,66 +1,84 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Goshne Prro
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Goshne Prro is a project to find discounts on Snapp Food and Snap Market and more in the future.
+It can find discounts based on the user's location and the user's favorite vendors/products and discount percentage.
 
-## About Laravel
+## Installation
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Development Environment (Laravel Sail)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+You can read the [Laravel Sail documentation](https://laravel.com/docs/11.x/sail) for more information.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```bash
+# clone the repository
+git clone https://github.com/ahbanavi/goshneprro.git
+cd goshneprro
 
-## Learning Laravel
+# write your .env file (don't forget to put app key)
+cp .env.example .env
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+# install the dependencies
+docker run --rm \
+    -u "$(id -u):$(id -g)" \
+    -v "$(pwd):/var/www/html" \
+    -w /var/www/html \
+    laravelsail/php83-composer:latest \
+    composer install --ignore-platform-reqs
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+# build and run the containers
+./vendor/bin/sail up -d
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+# run the migrations
+./vendor/bin/sail artisan migrate
 
-## Laravel Sponsors
+# Create admin user
+./vendor/bin/sail artisan make:admin-user
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# run schedule in the background 
+./vendor/bin/sail artisan schedule:work -n &
 
-### Premium Partners
+# run queue worker in the background
+./vendor/bin/sail artisan queue:work -v -n &
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+### Production Environment (Docker)
 
-## Contributing
+```bash
+# create a directory for the app to hold .env and docker-compose.yml
+mkdir goshneprro-docker
+cd goshneprro-docker
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# download .env file and write your configurations
+curl -o .env https://raw.githubusercontent.com/ahbanavi/goshneprro/main/.env.example
 
-## Code of Conduct
+# download docker-compose.yml file
+curl -o docker-compose.yml https://raw.githubusercontent.com/ahbanavi/goshneprro/main/docker-compose-production.yml
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# run the containers
+docker compose up -d
 
-## Security Vulnerabilities
+# run the migrations
+docker compose exec app php artisan migrate
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# Create admin user
+docker compose exec app php artisan make:admin-user
+```
+
+## Configuration
+
+Besides the default Laravel environment variables, you can set the following variables specifically for Goshne Prro:
+
+| Var                       | Description                                                    | Required | Default                     |
+|---------------------------|----------------------------------------------------------------|----------|-----------------------------|
+| TELEGRAM_BOT_TOKEN        | Telegram bot token                                             | **Yes**  | -                           |
+| TELEGRAM_BOT_BASE_URI     | Base URI (Bridge) for the Telegram Bot API                     | No       | https://api.telegram.org    |
+| MARKET_PARTY_PRODUCTS_TTL | Time-to-live (TTL) for market party products caches in seconds | No       | 900                         |
+| MARKET_PARTY_NOTIFY_TTL   | TTL for market party notifications cache in seconds            | No       | 43200                       |
+| FOOD_PARTY_NOTIFY_TTL     | TTL for food party notifications cache in seconds              | No       | 43200                       |
+| FOOD_PARTY_SCHEDULE       | Cron schedule for food party runs                              | No       | "*/15 * * * *"              |
+| MARKET_PARTY_SCHEDULE     | Cron schedule for market party runs                            | No       | "*/15 * * * *"              |
+| DEFAULT_LATITUDE          | Default latitude for UI map                                    | No       | 36.32112700482277 (Mashhad) |
+| DEFAULT_LONGITUDE         | Default longitude for UI map                                   | No       | 59.53740119934083 (Mashhad) |
 
 ## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is licensed under the [Creative Commons Attribution-NonCommercial 4.0 International License](./LICENSE.md). You are free to share, copy and adapt the material in any medium or format for non-commercial purposes with proper attribution, providing a link to the license, and indicating if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
