@@ -64,6 +64,14 @@ docker compose exec app php artisan migrate
 docker compose exec app php artisan make:admin-user
 ```
 
+### Update
+    
+```bash
+cd goshneprro-docker
+docker compose pull app && docker compose up -d
+```
+
+
 ## Configuration
 
 Besides the default Laravel environment variables, you can set the following variables specifically for Goshne Prro:
