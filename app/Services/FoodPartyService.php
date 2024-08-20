@@ -77,9 +77,9 @@ class FoodPartyService
         $notifyCache = collect(Redis::hGetAll(config('goshne.ttl.food_party.notify.prefix').$foodParty->id));
         $new_product_hashes = collect();
 
-        $all_products->each(function ($sueper_type_products) use ($foodParty, $notifyCache, $new_product_hashes) {
-            $products = $sueper_type_products['products'];
-            $party_hashtag = $sueper_type_products['party_hashtag'];
+        $all_products->each(function ($super_type_products) use ($foodParty, $notifyCache, $new_product_hashes) {
+            $products = $super_type_products['products'];
+            $party_hashtag = $super_type_products['party_hashtag'];
 
             foreach ($products as $product) {
                 $discount_price = $product['price'] * (100 - $product['discountRatio']) / 100;
