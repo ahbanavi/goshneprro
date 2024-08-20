@@ -29,72 +29,72 @@ class FoodPartyService
 
     public static function get(FoodParty $foodParty): int
     {
-        $home_url = "https://snappfood.ir/search/api/v1/desktop/new-home?lat={$foodParty->latitude}&long={$foodParty->longitude}&optionalClient=WEBSITE&client=WEBSITE&deviceType=WEBSITE&appVersion=8.1.1&locale=fa";
+        $party_base_url = "https://foodparty.zoodfood.com/676858d198d35e7713a47e66ba0755c8/mobile-offers/{$foodParty->latitude}/{$foodParty->longitude}";
+        $super_types = [1, 2, 3, 6, 8, 11];
 
-        $home_page = Http::withHeaders(static::$headers + ['Host' => 'snappfood.ir'])->get($home_url);
+        $all_products = collect();
+        foreach ($super_types as $sueper_type) {
+            $party_url = $party_base_url."?superType={$sueper_type}";
+            $party_page = Http::withHeaders(static::$headers + ['Host' => parse_url($party_url)['host']])->get($party_url);
+            if ($party_page->status() !== 200) {
+                throw_if($party_page->status() === 403, SnappFoodPartyBlockedException::class);
+                Log::notice('SnappFoodParty Error not 200: '.$party_page->status().'url: '.$party_url);
 
-        if ($home_page->status() !== 200) {
-            throw_if($home_page->status() === 403, SnappFoodPartyBlockedException::class);
-            Log::notice('SnappFoodParty Error not 200: '.$home_page->status().'url: '.$home_url);
+                return -1;
+            }
 
-            return -1;
-        }
+            $party_data = $party_page->json();
 
-        $home_data = $home_page->json();
+            if (isset($party_data['error'])) {
+                Log::notice('SnappFoodParty Error: '.$party_data['error']);
 
-        if (isset($home_data['error'])) {
-            Log::notice('SnappFoodParty Error: '.$home_data['error']);
+                return -1;
+            }
 
-            return -1;
-        }
+            $party_title = $party_data['data']['title'];
+            $party_hashtag = '#'.str_replace(' ', '_', $party_title);
 
-        if ($home_data['data']['result'][1]['id'] != 8) {
-            return 0;
-        }
+            $products = $party_data['data']['products'];
 
-        $party_url = $home_data['data']['result'][1]['data']['url'];
-
-        $party_page = Http::withHeaders(static::$headers + ['Host' => parse_url($party_url)['host']])->get($party_url);
-        if ($party_page->status() !== 200) {
-            throw_if($party_page->status() === 403, SnappFoodPartyBlockedException::class);
-            Log::notice('SnappFoodParty Error not 200: '.$party_page->status().'url: '.$party_url);
-
-            return -1;
-        }
-
-        $party_data = $party_page->json();
-
-        if (isset($party_data['error'])) {
-            Log::notice('SnappFoodParty Error: '.$party_data['error']);
-
-            return -1;
-        }
-
-        $party_title = $party_data['data']['title'];
-
-        $party_hashtag = '#'.str_replace(' ', '_', $party_title);
-
-        $products = $party_data['data']['products'];
-
-        $notifyCache = collect(Redis::hGetAll(config('goshne.ttl.food_party.notify.prefix').$foodParty->id));
-        $new_product_hashes = collect();
-        foreach ($products as $product) {
-            $discount_price = $product['price'] * (100 - $product['discountRatio']) / 100;
-            $product_hash = md5($foodParty->id.$product['id'].$discount_price.$product['vendorCode']);
-
-            if ($notifyCache->has($product_hash)) {
+            if (empty($products)) {
                 continue;
             }
 
-            if ($product['discountRatio'] >= $foodParty->threshold
-                || collect($foodParty->vendors)->contains(
-                    fn ($vendor) => $vendor['c'] == $product['vendorCode'] && $product['discountRatio'] >= $vendor['t']
-                )
-            ) {
-                $foodParty->notify(new SnappFoodPartyNotification($product, $party_hashtag));
-                $new_product_hashes->push($product_hash);
-            }
+            $all_products->push([
+                'products' => $products,
+                'party_hashtag' => $party_hashtag,
+            ]);
         }
+
+        if ($all_products->isEmpty()) {
+            return 0;
+        }
+
+        $notifyCache = collect(Redis::hGetAll(config('goshne.ttl.food_party.notify.prefix').$foodParty->id));
+        $new_product_hashes = collect();
+
+        $all_products->each(function ($sueper_type_products) use ($foodParty, $notifyCache, $new_product_hashes) {
+            $products = $sueper_type_products['products'];
+            $party_hashtag = $sueper_type_products['party_hashtag'];
+
+            foreach ($products as $product) {
+                $discount_price = $product['price'] * (100 - $product['discountRatio']) / 100;
+                $product_hash = md5($foodParty->id.$product['id'].$discount_price.$product['vendorCode']);
+
+                if ($notifyCache->has($product_hash)) {
+                    continue;
+                }
+
+                if ($product['discountRatio'] >= $foodParty->threshold
+                    || collect($foodParty->vendors)->contains(
+                        fn ($vendor) => $vendor['c'] == $product['vendorCode'] && $product['discountRatio'] >= $vendor['t']
+                    )
+                ) {
+                    $foodParty->notify(new SnappFoodPartyNotification($product, $party_hashtag));
+                    $new_product_hashes->push($product_hash);
+                }
+            }
+        });
 
         if ($new_product_hashes->isNotEmpty()) {
             Redis::transaction(function (\Redis $redis) use ($foodParty, $new_product_hashes) {
