@@ -5,8 +5,6 @@ on:
     workflows: [Release Image]
     types:
       - completed
-  workflow_dispatch:
-
 
 jobs:
   deploy:
