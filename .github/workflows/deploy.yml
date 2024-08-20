@@ -21,4 +21,4 @@ jobs:
             cd goshne
             docker compose pull app && docker compose up -d
             sleep 10
-            docker compose exec app php artisan migrate
+            docker compose exec app php artisan migrate --force
