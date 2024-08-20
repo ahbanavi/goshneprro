@@ -43,6 +43,17 @@ class FoodPartyResource extends Resource
                 Select::make('user_id')->relationship('user', 'name')->searchable()->preload()->visible(auth()->user()->isAdmin()),
                 TextInput::make('threshold')->label('Global Discount Threshold')->integer()->hint('between 0 and 99')->default(0)->minValue(0)->maxValue(99)->required(),
                 TextInput::make('tg_chat_id')->label('Telegram Chat ID')->integer()->hint('you can get it with https://t.me/username_to_id_bot')->required(),
+                Select::make('super_types')->label('Super Types')
+                    ->extraAttributes(['dir' => 'rtl'])
+                    ->minItems(1)
+                    ->multiple()->options([
+                        1 => 'شام و ناهار',
+                        2 => 'صبحانه و عصرانه',
+                        3 => 'شیرینی',
+                        6 => 'فروت پارتی',
+                        8 => 'آبمیوه و بستنی',
+                        11 => 'پروتئین',
+                    ])->required(),
                 Map::make('location')->label('Location')->columnSpanFull()->default([
                     'lat' => config('goshne.default.latitude'),
                     'lng' => config('goshne.default.longitude'),

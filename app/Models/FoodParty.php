@@ -22,6 +22,7 @@ class FoodParty extends Model implements Party
         'active',
         'tg_chat_id',
         'vendors',
+        'super_types',
     ];
 
     protected $casts = [
@@ -32,6 +33,7 @@ class FoodParty extends Model implements Party
         'threshold' => 'integer',
         'tg_chat_id' => 'integer',
         'vendors' => 'array',
+        'super_types' => 'array',
     ];
 
     public function user(): BelongsTo

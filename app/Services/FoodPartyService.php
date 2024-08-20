@@ -30,7 +30,11 @@ class FoodPartyService
     public static function get(FoodParty $foodParty): int
     {
         $party_base_url = "https://foodparty.zoodfood.com/676858d198d35e7713a47e66ba0755c8/mobile-offers/{$foodParty->latitude}/{$foodParty->longitude}";
-        $super_types = [1, 2, 3, 6, 8, 11];
+        $super_types = $foodParty->super_types;
+
+        if (empty($super_types)) {
+            return 0;
+        }
 
         $all_products = collect();
         foreach ($super_types as $sueper_type) {

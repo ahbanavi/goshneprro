@@ -106,6 +106,9 @@ nginx -s reload
 ```bash
 cd goshneprro-docker
 docker compose pull app && docker compose up -d
+
+# run the migrations
+docker compose exec app php artisan migrate
 ```
 
 ## Configuration
