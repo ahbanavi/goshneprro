@@ -15,7 +15,8 @@ class SnappFoodPartyNotification extends Notification implements ShouldQueue
 
     public function __construct(
         public array $product,
-        public string $hashtag
+        public string $hashtag,
+        public bool $isLast = false,
     ) {}
 
     public function via($notifiable): array
@@ -30,18 +31,17 @@ class SnappFoodPartyNotification extends Notification implements ShouldQueue
         $vendor_url = 'https://snappfood.ir/restaurant/menu/'.$product['vendorCode'];
         $product_url = "$vendor_url?productId=".$product['id'];
         $discount_price = $product['price'] * (100 - $product['discountRatio']) / 100;
-        $diff = $product['price'] - $discount_price;
 
-        return TelegramFile::create()
+        return TelegramFile::create()->parseMode('HTML')
+            ->disableNotification(! $this->isLast)
             ->content(
-                "🍟 [{$product['title']}]($product_url) \n".
-                "🍽 [{$product['vendorTypeTitle']} {$product['vendorTitle']}]($vendor_url)\n\n".
-                "🛍 {$this->hashtag} *{$product['discountRatio']}%*\n".
-                '💵 *'.number_format($product['price'])."* ت\n".
-                '💸 *'.number_format($discount_price).'* ت ('.number_format($diff)."-)\n".
-                '🛵 *'.number_format($product['deliveryFee'])."* ت\n\n".
-                '⭐️ '.round($product['rating'], 2).' از '.number_format($product['vote_count'])." رای\n".
-                "⌛ {$product['remaining']} تا مونده"
+                "🍟 <b>{$product['title']}</b>\n".
+                "🍽 <a href=\"{$vendor_url}\">{$product['vendorTypeTitle']} {$product['vendorTitle']}</a>\n".
+                (empty($product['rating']) ? '' : '⭐️ '.round($product['rating'], 2).' از '.number_format($product['vote_count'])." نظر\n\n").
+                "🛍 {$this->hashtag} <b>{$product['discountRatio']}%</b>\n".
+                '💵 <s>'.number_format($product['price']).' ت</s> <b>'.number_format($discount_price)." ت </b>\n".
+                '🛵 '.number_format($product['deliveryFee'])." ت\n\n".
+                "⌛️ {$product['remaining']} موجود ({$product['capacity']} قابل سفارش، کف ".number_format($product['minOrder']).' ت)'
             )
             ->photo($product['main_image'] ?? 'https://raw.githubusercontent.com/ahbanavi/goshne/main/resource/default.jpg')
             ->button('🛍️ خرید محصول', $product_url)

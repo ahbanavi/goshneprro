@@ -56,7 +56,7 @@ class FoodPartyService
             }
 
             $party_title = $party_data['data']['title'];
-            $party_hashtag = '#'.str_replace(' ', '_', $party_title);
+            $party_hashtag = '#'.str_replace(' ', '‌', $party_title);
 
             $products = $party_data['data']['products'];
 
@@ -76,8 +76,8 @@ class FoodPartyService
 
         $notifyCache = collect(Redis::hGetAll(config('goshne.ttl.food_party.notify.prefix').$foodParty->id));
         $new_product_hashes = collect();
-
-        $all_products->each(function ($super_type_products) use ($foodParty, $notifyCache, $new_product_hashes) {
+        $new_products = collect();
+        $all_products->each(function ($super_type_products) use ($foodParty, $notifyCache, $new_product_hashes, $new_products) {
             $products = $super_type_products['products'];
             $party_hashtag = $super_type_products['party_hashtag'];
 
@@ -94,10 +94,17 @@ class FoodPartyService
                         fn ($vendor) => $vendor['c'] == $product['vendorCode'] && $product['discountRatio'] >= $vendor['t']
                     )
                 ) {
-                    $foodParty->notify(new SnappFoodPartyNotification($product, $party_hashtag));
+                    $new_products->push([
+                        'product' => $product,
+                        'party_hashtag' => $party_hashtag,
+                    ]);
                     $new_product_hashes->push($product_hash);
                 }
             }
+        });
+
+        $new_products->each(function ($item) use ($foodParty, $new_products) {
+            $foodParty->notify(new SnappFoodPartyNotification(product: $item['product'], hashtag: $item['party_hashtag'], isLast: $item === $new_products->last()));
         });
 
         if ($new_product_hashes->isNotEmpty()) {
