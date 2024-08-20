@@ -46,13 +46,18 @@ class FoodPartyResource extends Resource
                 Select::make('super_types')->label('Super Types')
                     ->extraAttributes(['dir' => 'rtl'])
                     ->minItems(1)
+                    ->default([1])
                     ->multiple()->options([
-                        1 => 'شام و ناهار',
-                        2 => 'صبحانه و عصرانه',
-                        3 => 'شیرینی',
-                        6 => 'فروت پارتی',
-                        8 => 'آبمیوه و بستنی',
+                        1 => 'رستوران',
+                        2 => 'کافه',
+                        3 => 'شیرینی‌',
+                        6 => 'میوه',
+                        8 => 'آبمیوه بستنی',
                         11 => 'پروتئین',
+                        21 => 'سلامت و زیبایی',
+                        22 => 'گل و گیاه',
+                        25 => 'عطاری',
+                        26 => 'قهوه و شکلات',
                     ])->required(),
                 Map::make('location')->label('Location')->columnSpanFull()->default([
                     'lat' => config('goshne.default.latitude'),
