@@ -28,10 +28,9 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('telegram', function (object $notifiable) {
             $chat_id = $notifiable->notifiables->first()->tg_chat_id;
-            $limit = $chat_id < 0 ? 20 : 60;
+            $limit = $chat_id < 0 ? 20 : 100;
 
             return [
-                Limit::perSecond(1),
                 Limit::perMinute($limit)->by($chat_id),
             ];
         });

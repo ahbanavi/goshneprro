@@ -112,8 +112,8 @@ class MarketPartyService
                 $marketParty->max_item === 0 ? $group->count() : $marketParty->max_item
             ))->flatten(1);
 
-        $sorted->each(function ($item, $index) use ($marketParty, $sorted) {
-            $marketParty->notify((new MarketPartyNotification(product: $item['product'], vendor: $item['vendor'], isLast: $item === $sorted->last()))->delay($index));
+        $sorted->each(function ($item) use ($marketParty, $sorted) {
+            $marketParty->notify((new MarketPartyNotification(product: $item['product'], vendor: $item['vendor'], isLast: $item === $sorted->last())));
         });
 
         if ($new_product_hashes->isNotEmpty()) {

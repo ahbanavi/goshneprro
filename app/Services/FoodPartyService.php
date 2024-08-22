@@ -103,8 +103,8 @@ class FoodPartyService
             }
         });
 
-        $new_products->each(function ($item, $index) use ($foodParty, $new_products) {
-            $foodParty->notify((new SnappFoodPartyNotification(product: $item['product'], hashtag: $item['party_hashtag'], isLast: $item === $new_products->last()))->delay($index));
+        $new_products->each(function ($item) use ($foodParty, $new_products) {
+            $foodParty->notify((new SnappFoodPartyNotification(product: $item['product'], hashtag: $item['party_hashtag'], isLast: $item === $new_products->last())));
         });
 
         if ($new_product_hashes->isNotEmpty()) {
