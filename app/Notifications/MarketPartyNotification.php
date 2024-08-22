@@ -44,7 +44,7 @@ class MarketPartyNotification extends Notification implements ShouldQueue
                 '🛵 '.($vendor['isPro'] ? '<s>'.number_format($vendor['deliveryFee']).' ت</s> <b> ارسال رایگان (پرو)</b>' : number_format($vendor['deliveryFee']).' ت')."\n\n".
                 "⌛️ {$product['marketPartyCapacity']} موجود ({$product['capacity']} قابل سفارش، کف ".number_format($product['minOrder']).' ت)'
             )
-            ->photo($product['mainImage'] ?? 'https://raw.githubusercontent.com/ahbanavi/goshne/main/resource/default.jpg')
+            ->photo(empty($product['mainImage']) ? 'https://raw.githubusercontent.com/ahbanavi/goshne/main/resource/default.jpg' : $product['main_image'])
             ->button('🛒 سوپر مارکت ', $vendor_url);
     }
 
@@ -56,5 +56,10 @@ class MarketPartyNotification extends Notification implements ShouldQueue
     public function retryUntil(): DateTime
     {
         return now()->addMinutes(10);
+    }
+
+    public function backoff(): array
+    {
+        return [10, 30, 60];
     }
 }

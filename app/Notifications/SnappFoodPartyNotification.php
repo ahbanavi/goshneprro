@@ -43,7 +43,7 @@ class SnappFoodPartyNotification extends Notification implements ShouldQueue
                 '🛵 '.number_format($product['deliveryFee'])." ت\n\n".
                 "⌛️ {$product['remaining']} موجود ({$product['capacity']} قابل سفارش، کف ".number_format($product['minOrder']).' ت)'
             )
-            ->photo($product['main_image'] ?? 'https://raw.githubusercontent.com/ahbanavi/goshne/main/resource/default.jpg')
+            ->photo(empty($product['main_image']) ? 'https://raw.githubusercontent.com/ahbanavi/goshne/main/resource/default.jpg' : $product['main_image'])
             ->button('🛍️ خرید محصول', $product_url)
             ->button('🍽 منو '.$product['vendorTypeTitle'], $vendor_url);
     }
@@ -56,5 +56,10 @@ class SnappFoodPartyNotification extends Notification implements ShouldQueue
     public function retryUntil(): DateTime
     {
         return now()->addMinutes(10);
+    }
+
+    public function backoff(): array
+    {
+        return [10, 30, 60];
     }
 }
