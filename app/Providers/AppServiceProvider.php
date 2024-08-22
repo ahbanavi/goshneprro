@@ -31,7 +31,7 @@ class AppServiceProvider extends ServiceProvider
             $limit = $chat_id < 0 ? 20 : 60;
 
             return [
-                Limit::perSecond(3),
+                Limit::perSecond(1),
                 Limit::perMinute($limit)->by($chat_id),
             ];
         });
