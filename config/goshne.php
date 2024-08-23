@@ -28,6 +28,7 @@ return [
     'default' => [
         'latitude' => env('DEFAULT_LATITUDE', 36.32112700482277),
         'longitude' => env('DEFAULT_LONGITUDE', 59.53740119934083),
+        'image' => env('DEFAULT_IMAGE', 'https://raw.githubusercontent.com/ahbanavi/goshne/main/resource/default.jpg'),
     ],
 
 ];

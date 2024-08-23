@@ -115,17 +115,18 @@ docker compose exec app php artisan migrate
 
 Besides the default Laravel environment variables, you can set the following variables specifically for Goshne Prro:
 
-| Var                       | Description                                                    | Required | Default                     |
-|---------------------------|----------------------------------------------------------------|----------|-----------------------------|
-| TELEGRAM_BOT_TOKEN        | Telegram bot token                                             | **Yes**  | -                           |
-| TELEGRAM_BOT_BASE_URI     | Base URI (Bridge) for the Telegram Bot API                     | No       | https://api.telegram.org    |
-| MARKET_PARTY_PRODUCTS_TTL | Time-to-live (TTL) for market party products caches in seconds | No       | 900                         |
-| MARKET_PARTY_NOTIFY_TTL   | TTL for market party notifications cache in seconds            | No       | 43200                       |
-| FOOD_PARTY_NOTIFY_TTL     | TTL for food party notifications cache in seconds              | No       | 43200                       |
-| FOOD_PARTY_SCHEDULE       | Cron schedule for food party runs                              | No       | "*/15 * * * *"              |
-| MARKET_PARTY_SCHEDULE     | Cron schedule for market party runs                            | No       | "*/15 * * * *"              |
-| DEFAULT_LATITUDE          | Default latitude for UI map                                    | No       | 36.32112700482277 (Mashhad) |
-| DEFAULT_LONGITUDE         | Default longitude for UI map                                   | No       | 59.53740119934083 (Mashhad) |
+| Var                       | Description                                                    | Required | Default                                                                              |
+|---------------------------|----------------------------------------------------------------|----------|--------------------------------------------------------------------------------------|
+| TELEGRAM_BOT_TOKEN        | Telegram bot token                                             | **Yes**  | -                                                                                    |
+| TELEGRAM_BOT_BASE_URI     | Base URI (Bridge) for the Telegram Bot API                     | No       | https://api.telegram.org                                                             |
+| MARKET_PARTY_PRODUCTS_TTL | Time-to-live (TTL) for market party products caches in seconds | No       | 900                                                                                  |
+| MARKET_PARTY_NOTIFY_TTL   | TTL for market party notifications cache in seconds            | No       | 43200                                                                                |
+| FOOD_PARTY_NOTIFY_TTL     | TTL for food party notifications cache in seconds              | No       | 43200                                                                                |
+| FOOD_PARTY_SCHEDULE       | Cron schedule for food party runs                              | No       | "*/15 * * * *"                                                                       |
+| MARKET_PARTY_SCHEDULE     | Cron schedule for market party runs                            | No       | "*/15 * * * *"                                                                       |
+| DEFAULT_LATITUDE          | Default latitude for UI map                                    | No       | 36.32112700482277 (Mashhad)                                                          |
+| DEFAULT_LONGITUDE         | Default longitude for UI map                                   | No       | 59.53740119934083 (Mashhad)                                                          |
+| DEFAULT_IMAGE             | Default image for notifications                                | No       | [Image](https://raw.githubusercontent.com/ahbanavi/goshne/main/resource/default.jpg) |
 
 ## License
 This project is licensed under the [Creative Commons Attribution-NonCommercial 4.0 International License](./LICENSE.md). You are free to share, copy and adapt the material in any medium or format for non-commercial purposes with proper attribution, providing a link to the license, and indicating if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.

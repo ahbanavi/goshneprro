@@ -44,7 +44,7 @@ class MarketPartyNotification extends Notification implements ShouldQueue
                 '🛵 '.($vendor['isPro'] ? '<s>'.number_format($vendor['deliveryFee']).' ت</s> <b> ارسال رایگان (پرو)</b>' : number_format($vendor['deliveryFee']).' ت')."\n\n".
                 "⌛️ {$product['marketPartyCapacity']} موجود ({$product['capacity']} قابل سفارش، کف ".number_format($product['minOrder']).' ت)'
             )
-            ->photo(empty($product['mainImage']) ? 'https://raw.githubusercontent.com/ahbanavi/goshne/main/resource/default.jpg' : $product['mainImage'])
+            ->photo(empty($product['mainImage']) ? config('goshne.default.image') : $product['mainImage'])
             ->button('🛒 سوپر مارکت ', $vendor_url);
     }
 

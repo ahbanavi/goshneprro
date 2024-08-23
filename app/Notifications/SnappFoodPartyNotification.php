@@ -19,9 +19,9 @@ class SnappFoodPartyNotification extends Notification implements ShouldQueue
         public bool $isLast = false,
     ) {}
 
-    public function via($notifiable): array
+    public function via($notifiable): string
     {
-        return ['telegram'];
+        return MyTelegramChannel::class;
     }
 
     public function toTelegram($notifiable)
@@ -43,7 +43,7 @@ class SnappFoodPartyNotification extends Notification implements ShouldQueue
                 '🛵 '.number_format($product['deliveryFee'])." ت\n\n".
                 "⌛️ {$product['remaining']} موجود ({$product['capacity']} قابل سفارش، کف ".number_format($product['minOrder']).' ت)'
             )
-            ->photo(empty($product['main_image']) ? 'https://raw.githubusercontent.com/ahbanavi/goshne/main/resource/default.jpg' : $product['main_image'])
+            ->photo(empty($product['main_image']) ? config('goshne.default.image') : $product['main_image'])
             ->button('🛍️ خرید محصول', $product_url)
             ->button('🍽 منو '.$product['vendorTypeTitle'], $vendor_url);
     }
