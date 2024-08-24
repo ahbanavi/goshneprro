@@ -14,7 +14,7 @@ RUN composer install \
 FROM php:8.3-fpm
 
 RUN apt-get update -y \
-    && apt-get install -y --no-install-recommends libpq-dev libzip-dev zip libicu-dev \
+    && apt-get install -y --no-install-recommends libpq-dev libzip-dev zip libicu-dev procps \
     && docker-php-ext-install pdo_pgsql zip intl bcmath \
     && pecl install redis && docker-php-ext-enable redis \
     && rm -rf /tmp/pear \
