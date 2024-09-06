@@ -37,22 +37,28 @@ class FoodPartyService
         }
 
         $all_products = collect();
-        foreach ($super_types as $sueper_type) {
-            $party_url = $party_base_url."?superType={$sueper_type}";
+        foreach ($super_types as $super_type) {
+            $party_url = $party_base_url."?superType={$super_type}";
+
             $party_page = Http::withHeaders(static::$headers + ['Host' => parse_url($party_url)['host']])->get($party_url);
             if ($party_page->status() !== 200) {
                 throw_if($party_page->status() === 403, SnappFoodPartyBlockedException::class);
-                Log::notice('SnappFoodParty Error not 200: '.$party_page->status().'url: '.$party_url);
 
-                return -1;
+                if ($party_page->json('error') != 'no active deal') {
+                    Log::notice('SnappFoodParty Error not 200: '.$party_page->status().' url: '.$party_url);
+                }
+
+                continue;
             }
 
             $party_data = $party_page->json();
 
             if (isset($party_data['error'])) {
-                Log::notice('SnappFoodParty Error: '.$party_data['error']);
+                if ($party_data['error'] != 'no active deal') {
+                    Log::notice('SnappFoodParty Error: '.$party_data['error']);
+                }
 
-                return -1;
+                continue;
             }
 
             $party_title = $party_data['data']['title'];
