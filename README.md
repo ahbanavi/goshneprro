@@ -4,7 +4,7 @@ Goshne Prro is a project to find discounts on Snapp Food and Snap Market and mor
 It can find discounts based on the user's location and the user's favorite vendors/products and discount percentage.
 
 ## Requirements
-You can use any database you want, but for caching you need to use **Redis version 7.4.0** or higher.
+You can use any [Laravel Pulse compatible database](https://laravel.com/docs/11.x/pulse#introduction), such as MySQL, MariaDB, or **PostgreSQL**, but for caching you need to use **Redis version 7.4.0** or higher. but for caching you need to use **Redis version 7.4.0** or higher.
 The reason is usage of `HEXPIRE` command in Redis which is available in Redis 7.4 and higher. [info](https://redis.io/docs/latest/commands/hexpire/)
 
 ## Installation
