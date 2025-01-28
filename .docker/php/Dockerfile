@@ -1,4 +1,4 @@
-FROM composer:2.6 as builder
+FROM composer:2.6 AS builder
 
 COPY composer.lock .
 COPY composer.json .
