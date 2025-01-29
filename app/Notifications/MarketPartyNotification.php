@@ -36,15 +36,15 @@ class MarketPartyNotification extends Notification implements ShouldQueue
             ->disableNotification(! $this->isLast)
             ->content(
                 "🍎 <b>{$product['title']}</b>\n".
-                "🛒 <a href=\"{$vendor_url}\"> {$vendor['title']}</a>".($vendor['isPro'] ? '🌟' : '')."\n".
+                "🛒 <a href=\"{$vendor_url}\"> {$vendor['title']}</a>".($vendor['is_pro'] ? '🌟' : '')."\n".
                 (empty($vendor['rating']) ? '' : '⭐️ '.round($vendor['rating'], 2).' از '.number_format($vendor['countReview']).' امتیاز و '.number_format($vendor['commentCount'])." نظر\n").
                 "📍 {$vendor['area']}\n\n".
                 "🛍 #مارکت‌پارتی <b>{$product['discountRatio']}%</b>\n".
                 '💵 <s>'.number_format($product['price']).' ت</s> <b>'.number_format($discount_price)." ت </b>\n".
-                '🛵 '.($vendor['isPro'] ? '<s>'.number_format($vendor['deliveryFee']).' ت</s> <b> ارسال رایگان (پرو)</b>' : number_format($vendor['deliveryFee']).' ت')."\n\n".
-                "⌛️ {$product['marketPartyCapacity']} موجود ({$product['capacity']} قابل سفارش، کف ".number_format($product['minOrder']).' ت)'
+                '🛵 '.($vendor['is_pro'] ? '<s>'.number_format($vendor['deliveryFee']).' ت</s> <b> ارسال رایگان (پرو)</b>' : number_format($vendor['deliveryFee']).' ت')."\n\n".
+                "⌛️ {$product['stock']} موجود ({$product['capacity']} قابل سفارش، کف ".number_format($product['minOrder']).' ت)'
             )
-            ->photo(empty($product['mainImage']) ? config('goshne.default.image') : $product['mainImage'])
+            ->photo(empty($product['main_image']) ? config('goshne.default.image') : $product['main_image'])
             ->button('🛒 سوپر مارکت ', $vendor_url);
     }
 

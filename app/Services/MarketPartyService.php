@@ -14,45 +14,55 @@ use Illuminate\Support\Str;
 class MarketPartyService
 {
     private static array $headers = [
-        'accept' => '*/*',
-        'accept-language' => 'en-US,en;q=0.9,fa;q=0.8,nl;q=0.7,pt;q=0.6',
-        'content-type' => 'application/json',
-        'priority' => 'u=1, i',
-        'sec-ch-ua' => '"Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"',
-        'sec-ch-ua-mobile' => '?0',
-        'sec-ch-ua-platform' => '"Windows"',
-        'sec-fetch-dest' => 'empty',
-        'sec-fetch-mode' => 'cors',
-        'sec-fetch-site' => 'same-origin',
-        'Host' => 'snapp.express',
-        'Origin' => 'https://snapp.express',
-        'Referer' => 'https://snapp.express/marketparty-list',
-        'Referrer-Policy' => 'strict-origin-when-cross-origin',
+        'Host' => 'api.snapp.express',
+        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0',
+        'Accept' => 'application/json, text/plain, */*',
+        'Accept-Language' => 'fa-IR, fa;q=0.9,en;q=0.8,*;q=0.1',
+        'Accept-Encoding' => 'gzip, deflate, br, zstd',
+        'Origin' => 'https://express.snapp.market',
         'DNT' => '1',
-        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0',
+        'Connection' => 'keep-alive',
+        'Referer' => 'https://express.snapp.market/',
+        'Sec-Fetch-Dest' => 'empty',
+        'Sec-Fetch-Mode' => 'cors',
+        'Sec-Fetch-Site' => 'cross-site',
+        'TE' => 'trailers',
     ];
 
-    private static string $url = 'https://snapp.express/api';
+    private static string $url = 'https://api.snapp.express';
 
     public static function get(MarketParty $marketParty): int
     {
-        $headers = static::$headers;
-        $headers['x-metadata'] = json_encode(['lat' => $marketParty->latitude, 'long' => $marketParty->longitude]);
+        $params = [
+            'page' => 0,
+            'page_size' => 1000,
+            'extra-filter' => [
+                'vendor_collection' => -1
+            ],
+            'superType' => [4],
+            'mode' => 'CURRENT',
+            'item_position' => 'homePage',
+            'client' => 'PWA',
+            'deviceType' => 'DESKTOP',
+            'appVersion' => '1.157.7',
+            'lat' => $marketParty->latitude,
+            'long' => $marketParty->longitude
+        ];
 
-        $vendor_page = Http::withHeaders($headers)
-            ->withBody('{"operationName":"getVendorList","variables":{"variable":"-1","page":0,"pageSize":1000,"filters":{"superType":[4],"mode":"CURRENT","item_position":"homePage"}},"query":"query getVendorList($variable: String, $page: Int, $pageSize: Int, $filters: JSONObject) {\n  vendorList(\n    variable: $variable\n    page: $page\n    pageSize: $pageSize\n    filters: $filters\n  ) {\n    status\n    data {\n      count\n      openCount\n      extraSections {\n        filters {\n          top {\n            data {\n              title\n              value\n              __typename\n            }\n            __typename\n          }\n          sections {\n            data {\n              title\n              value\n              __typename\n            }\n            __typename\n          }\n          __typename\n        }\n        __typename\n      }\n      finalResult {\n        data {\n          id\n          title\n          isMarketParty\n          backgroundImage\n          commentCount\n          minimumOrderValue\n          code\n          status\n          area\n          countReview\n          isExpressPin\n          logo\n          isOpen\n          preOrderEnabled\n          deliveryFee\n          deliveryTime\n          discountValueForView\n          rating\n          rate\n          hasCoupon\n          bestCoupon\n          couponCount\n          isPro\n          deliveryTypes {\n            hasExpress\n            hasPickup\n            hasSlow\n            hasVendor\n            __typename\n          }\n          __typename\n        }\n        type\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}"}')
-            ->post(static::$url);
+        $vendor_page = Http::withHeaders(static::$headers)
+            ->get(static::$url . '/express-vendor/general/vendors-list', $params);
 
         if ($vendor_page->status() !== 200) {
             throw_if($vendor_page->status() === 403, MarketPartyBlockedException::class);
             Log::notice('MarketParty Error not 200: '.$vendor_page->status());
-
             return -1;
         }
 
-        $vendors = $vendor_page->json('data.vendorList.data.finalResult');
+        $vendors = collect($vendor_page->json('data.finalResult'))
+        ->filter(fn($item) => $item['type'] === 'VENDOR')
+        ->map(fn($item) => $item['data']);
 
-        if (empty($vendors)) {
+        if ($vendors->isEmpty()) {
             return 0;
         }
 
@@ -60,20 +70,31 @@ class MarketPartyService
         $new_product_hashes = collect();
         $new_products = collect();
         foreach ($vendors as $vendor) {
-            $products = Cache::remember(config('goshne.ttl.market_party.products.prefix').$vendor['data']['code'], config('goshne.ttl.market_party.products.ttl'), function () use ($headers, $vendor) {
-                $vendor_party_page = Http::withHeaders($headers)
-                    ->withBody('{"operationName":"getSuperMarketMarketParty","variables":{"variable":"'.$vendor['data']['code'].'","page":0,"pageSize":1000},"query":"query getSuperMarketMarketParty($variable: String, $page: Int, $pageSize: Int) {\n  superMarketMarketParty(variable: $variable, page: $page, pageSize: $pageSize) {\n    errors {\n      field\n      message\n      __typename\n    }\n    status\n    data {\n      title\n      firstActivePeriodStartRFC\n      firstActivePeriodEndRFC\n      currentTimeRFC\n      activePeriodTitle\n      inactivePeriodTitle\n      capacityPerOrder\n      config {\n        coverImage\n        moreImage\n        mainImage\n        backgroundColor\n        textColor\n        __typename\n      }\n      products {\n        totalCount\n        pageSize\n        list {\n          id\n          productVariationId\n          price\n          discountRatio\n          productVariationTitle\n          deliveryFee\n          stock\n          title\n          discount\n          image\n          vendorCode\n          vendorId\n          capacity\n          vendorTitle\n          description\n          mainImage\n          minOrder\n          totalStock\n          menuCategoryId\n          isSpecialBackend\n          isSpecial\n          isMarketParty\n          marketPartyCapacity\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}"}')
-                    ->post(static::$url);
+
+            $products = Cache::remember(config('goshne.ttl.market_party.products.prefix').$vendor['code'], config('goshne.ttl.market_party.products.ttl'), function () use ($vendor, $marketParty) {
+                $params = [
+                    'variable' => $vendor['code'],
+                    'page_size' => 1000,
+                    'client' => 'PWA',
+                    'deviceType' => 'DESKTOP',
+                    'appVersion' => '1.157.7',
+                    'lat' => $marketParty->latitude,
+                    'long' => $marketParty->longitude
+                ];
+
+                $vendor_party_page = Http::withHeaders(static::$headers)
+                    ->get(static::$url . '/market-party/' . $vendor['code'], $params);
 
                 if ($vendor_party_page->status() !== 200) {
                     throw_if($vendor_party_page->status() === 403, MarketPartyBlockedException::class);
                     Log::notice('SnappFoodParty Error not 200: '.$vendor_party_page->status());
-
                     return null;
                 }
 
-                return $vendor_party_page->json('data.superMarketMarketParty.data.products.list');
+                return $vendor_party_page->json('data.products.List');
             });
+
+
 
             if (empty($products)) {
                 continue;
@@ -81,7 +102,7 @@ class MarketPartyService
 
             foreach ($products as $product) {
                 $discount_price = $product['price'] - $product['discount'];
-                $product_hash = md5($product['id'].$discount_price.$product['vendorCode']);
+                $product_hash = md5($product['productVariationId'].$discount_price.$product['vendorCode']);
 
                 if ($notifyCache->has($product_hash)) {
                     continue;
@@ -94,9 +115,9 @@ class MarketPartyService
                 ) {
                     $new_products->push([
                         'product' => $product,
-                        'vendor' => $vendor['data'],
-                        'total_price' => $discount_price + ($vendor['data']['isPro'] ? 0 : $vendor['data']['deliveryFee']),
-                        'min_capacity' => min($product['marketPartyCapacity'], $product['capacity']),
+                        'vendor' => $vendor,
+                        'total_price' => $discount_price + ($vendor['is_pro'] ? 0 : $vendor['deliveryFee']),
+                        'min_capacity' => min($product['capacity'], $product['stock']),
                     ]);
                     $new_product_hashes->push($product_hash);
                 }
